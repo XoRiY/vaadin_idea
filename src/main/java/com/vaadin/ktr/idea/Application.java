@@ -1,4 +1,4 @@
-package com.vaadin.ktr.idea.ktr.idea;
+package com.vaadin.ktr.idea;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
