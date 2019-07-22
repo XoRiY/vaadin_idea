@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 
-@RestController("/users")
+@RestController
 public class UsersController {
 
   @PostMapping(path = "/users/user",
@@ -27,7 +27,8 @@ public class UsersController {
     return new ResponseEntity<>(user, HttpStatus.OK);
   }
 
-  @PostMapping(consumes = MediaType.APPLICATION_JSON_UTF8_VALUE,
+  @PostMapping(path = "/users",
+      consumes = MediaType.APPLICATION_JSON_UTF8_VALUE,
       produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
   public List<ResponseEntity<String>> postUsers(@RequestBody List<User> users) {
     return Arrays.asList(new ResponseEntity<>(HttpStatus.OK),
@@ -62,7 +63,8 @@ public class UsersController {
         .setId("TestId");
   }
 
-  @PutMapping(consumes = MediaType.APPLICATION_JSON_UTF8_VALUE)
+  @PutMapping(path = "/users",
+      consumes = MediaType.APPLICATION_JSON_UTF8_VALUE)
   public ResponseEntity<User> putUser(@RequestBody @NotNull User user) {
     return new ResponseEntity<>(user, HttpStatus.OK);
   }
