@@ -13,7 +13,10 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.reactive.server.WebTestClient;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.BodyInserters;
+import org.springframework.web.util.UriComponentsBuilder;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
@@ -28,7 +31,7 @@ public class UsersControllerTest {
 
   private static final String POST_USERS_URI = "/users";
 
-  private static final String GET_BY_EMAIL_URI = "";
+  private static final String GET_BY_EMAIL_URI = "/users/search";
 
   private static final String GET_BY_ID_URI = "";
 
@@ -77,8 +80,15 @@ public class UsersControllerTest {
         .body(BodyInserters.fromObject(givenUsers))
         .exchange()
         .expectStatus()
-        .isOk();
-    //TODO body
+        .isOk()
+        .expectStatus()
+        .isEqualTo(200)
+        .expectBody()
+        .json("[{\"headers\": {},\"body\": null,\"statusCodeValue\": 200,\"statusCode\": \"OK\"},"
+            + "{\"headers\": {},\"body\": null,\"statusCodeValue\": 200,\"statusCode\": \"OK\"},"
+            + "{\"headers\": {},\"body\": null,\"statusCodeValue\": 200,\"statusCode\": \"OK\"},"
+            + "{\"headers\": {},\"body\": null,\"statusCodeValue\": 200,\"statusCode\": \"OK\"},"
+            + "{\"headers\": {},\"body\": null,\"statusCodeValue\": 200,\"statusCode\": \"OK\"}]");
   }
 
   @Test
@@ -105,23 +115,124 @@ public class UsersControllerTest {
         .uri(URI)
         .exchange()
         .expectStatus()
-        .isOk().expectBody(new ParameterizedTypeReference<User>() {
-    }).isEqualTo(getUser());
+        .isOk()
+        .expectBody()
+        .json("[{"
+            + "\"id\": \"5d35f26c1d168c9021b852ee\","
+            + "\"email\": \"SimoneAcevedo@aquazure.com\","
+            + "\"firstName\": \"Simone\","
+            + "\"lastName\": \"Acevedo\""
+            + "}]");
   }
 
   @Test
-  public void getUsersTestWithWrongURI() throws NotImplementedException {
-    throw new NotImplementedException("not implemented yet exception");
+  public void getUsersTestWithWrongURI() {
+    List<User> givenUsers = getUsers();
+    webClient.get()
+        .uri(WRONG_URI)
+        .exchange()
+        .expectStatus()
+        .isNotFound()
+        .expectStatus()
+        .isEqualTo(404)
+        .expectBody()
+        .jsonPath("$.message")
+        .isEqualTo("No message available");
   }
 
   @Test
-  public void getUserByEmailTest() throws NotImplementedException {
-    throw new NotImplementedException("not implemented yet exception");
+  public void getUserByEmailTest() {
+
+    final MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+    params.set("email", "WiseMitchell@aquazure.com");
+
+    final String getBuildedUri = UriComponentsBuilder.fromUriString(GET_BY_EMAIL_URI)
+        .queryParams(params)
+        .toUriString();
+
+    webClient.get()
+        .uri(getBuildedUri)
+        .exchange()
+        .expectStatus()
+        .isOk()
+        .expectBody()
+        .json("{"
+            + "\"id\": \"5d35f26c55e92a6448d0f822\","
+            + "\"email\": \"WiseMitchell@aquazure.com\","
+            + "\"firstName\": \"Wise\","
+            + "\"lastName\": \"Mitchell\""
+            + "}");
   }
 
   @Test
-  public void getUserByEmailWithWrongURITest() throws NotImplementedException {
-    throw new NotImplementedException("not implemented yet exception");
+  public void getUserByEmailTestUsingNullValueParam() {
+
+    final MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+    params.set("email", null);
+
+    final String getBuildedUri = UriComponentsBuilder.fromUriString(GET_BY_EMAIL_URI)
+        .queryParams(params)
+        .toUriString();
+
+    webClient.get()
+        .uri(getBuildedUri)
+        .exchange()
+        .expectStatus()
+        .isOk()
+        .expectBody()
+        .json("{"
+            + "\"id\": \"5d35f26c55e92a6448d0f822\","
+            + "\"email\": \"WiseMitchell@aquazure.com\","
+            + "\"firstName\": \"Wise\","
+            + "\"lastName\": \"Mitchell\""
+            + "}");
+  }
+
+  @Test
+  public void getUserByEmailTestUsingBlankValueParam() {
+
+    final MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+    params.set("email", "");
+
+    final String getBuildedUri = UriComponentsBuilder.fromUriString(GET_BY_EMAIL_URI)
+        .queryParams(params)
+        .toUriString();
+
+    webClient.get()
+        .uri(getBuildedUri)
+        .exchange()
+        .expectStatus()
+        .isOk()
+        .expectBody()
+        .json("{"
+            + "\"id\": \"5d35f26c55e92a6448d0f822\","
+            + "\"email\": \"WiseMitchell@aquazure.com\","
+            + "\"firstName\": \"Wise\","
+            + "\"lastName\": \"Mitchell\""
+            + "}");
+
+    //TODO
+  }
+
+  @Test
+  public void getUserByEmailWithWrongURITest() {
+    final MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+    params.set("email", "WiseMitchell@aquazure.com");
+
+    final String getBuildedUri = UriComponentsBuilder.fromUriString(WRONG_URI)
+        .queryParams(params)
+        .toUriString();
+
+    webClient.get()
+        .uri(getBuildedUri)
+        .exchange()
+        .expectStatus()
+        .isNotFound()
+        .expectStatus()
+        .isEqualTo(404)
+        .expectBody()
+        .jsonPath("$.message")
+        .isEqualTo("No message available");
   }
 
   @Test
