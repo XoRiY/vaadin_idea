@@ -3,13 +3,14 @@ package com.vaadin.ktr.idea.domain;
 import com.vaadin.ktr.idea.domain.model.User;
 import java.util.Collections;
 import java.util.List;
-import jdk.jshell.spi.ExecutionControl.NotImplementedException;
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.reactive.server.WebTestClient;
@@ -31,9 +32,11 @@ public class UsersControllerTest {
 
   private static final String POST_USERS_URI = "/users";
 
+  private static final String PUT_USERS_URI = "/users";
+
   private static final String GET_BY_EMAIL_URI = "/users/search";
 
-  private static final String GET_BY_ID_URI = "";
+  private static final String GET_BY_ID_URI = "/users/id/5d35f26c1d168c9021b852ee";
 
   private static final String WRONG_URI = "/wrong/uri";
 
@@ -127,7 +130,7 @@ public class UsersControllerTest {
 
   @Test
   public void getUsersTestWithWrongURI() {
-    List<User> givenUsers = getUsers();
+
     webClient.get()
         .uri(WRONG_URI)
         .exchange()
@@ -168,24 +171,19 @@ public class UsersControllerTest {
   public void getUserByEmailTestUsingNullValueParam() {
 
     final MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-    params.set("email", null);
+    params.set("email", "");
 
-    final String getBuildedUri = UriComponentsBuilder.fromUriString(GET_BY_EMAIL_URI)
+    final String getBuildUri = UriComponentsBuilder.fromUriString(GET_BY_EMAIL_URI)
         .queryParams(params)
         .toUriString();
 
     webClient.get()
-        .uri(getBuildedUri)
+        .uri(getBuildUri)
         .exchange()
         .expectStatus()
-        .isOk()
-        .expectBody()
-        .json("{"
-            + "\"id\": \"5d35f26c55e92a6448d0f822\","
-            + "\"email\": \"WiseMitchell@aquazure.com\","
-            + "\"firstName\": \"Wise\","
-            + "\"lastName\": \"Mitchell\""
-            + "}");
+        .is4xxClientError();
+
+    //TODO ne donne pas le resultat attendu, la méthode ne leve pas d'exception quand l'email est null ou vide
   }
 
   @Test
@@ -194,24 +192,17 @@ public class UsersControllerTest {
     final MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
     params.set("email", "");
 
-    final String getBuildedUri = UriComponentsBuilder.fromUriString(GET_BY_EMAIL_URI)
+    final String getBuildUri = UriComponentsBuilder.fromUriString(GET_BY_EMAIL_URI)
         .queryParams(params)
         .toUriString();
 
     webClient.get()
-        .uri(getBuildedUri)
+        .uri(getBuildUri)
         .exchange()
         .expectStatus()
-        .isOk()
-        .expectBody()
-        .json("{"
-            + "\"id\": \"5d35f26c55e92a6448d0f822\","
-            + "\"email\": \"WiseMitchell@aquazure.com\","
-            + "\"firstName\": \"Wise\","
-            + "\"lastName\": \"Mitchell\""
-            + "}");
+        .is4xxClientError();
 
-    //TODO
+    //TODO ne donne pas le resultat attendu, la méthode ne leve pas d'exception quand l'email est null ou vide
   }
 
   @Test
@@ -236,20 +227,114 @@ public class UsersControllerTest {
   }
 
   @Test
-  public void getUserByIdTest() throws NotImplementedException {
-    throw new NotImplementedException("not implemented yet exception");
+  public void getUserByIdTest() {
+
+    webClient.get()
+        .uri(GET_BY_ID_URI)
+        .exchange()
+        .expectStatus()
+        .isOk()
+        .expectStatus()
+        .isEqualTo(200)
+        .expectStatus()
+        .isEqualTo(HttpStatus.OK)
+        .expectBody()
+        .json("{"
+            + "\"id\": \"5d35f26c1d168c9021b852ee\","
+            + "\"email\": \"SimoneAcevedo@aquazure.com\","
+            + "\"firstName\": \"Simone\","
+            + "\"lastName\": \"Acevedo\""
+            + "}");
   }
 
   @Test
-  public void putUserTest() throws NotImplementedException {
-    throw new NotImplementedException("not implemented yet exception");
+  public void getUserByIdTestWithNullValueId() {
+
+    webClient.get()
+        .uri("/users/id/")
+        .exchange()
+        .expectStatus()
+        .isNotFound()
+        .expectStatus()
+        .isEqualTo(404)
+        .expectStatus()
+        .isEqualTo(HttpStatus.NOT_FOUND)
+        .expectStatus()
+        .is4xxClientError()
+        .expectBody()
+        .jsonPath("$.message")
+        .isEqualTo("No message available");
   }
 
   @Test
-  public void putUserWithWrongURITest() throws NotImplementedException {
-    throw new NotImplementedException("not implemented yet exception");
+  public void getUserByIdTestWithWrongUriValueId() {
+
+    webClient.get()
+        .uri("/users/id/wrong/5d35f26c1d168c9021b852ee")
+        .exchange()
+        .expectStatus()
+        .isNotFound()
+        .expectStatus()
+        .isEqualTo(404)
+        .expectStatus()
+        .isEqualTo(HttpStatus.NOT_FOUND)
+        .expectStatus()
+        .is4xxClientError()
+        .expectBody()
+        .jsonPath("$.message")
+        .isEqualTo("No message available");
   }
 
+  @Test
+  public void putUserTest() {
+    User givenUser = getUser();
+
+    webClient.put()
+        .uri(PUT_USERS_URI)
+        .contentType(MediaType.APPLICATION_JSON)
+        .body(BodyInserters.fromObject(givenUser))
+        .exchange()
+        .expectStatus()
+        .isOk().expectBody(new ParameterizedTypeReference<User>() {
+    }).isEqualTo(getUser());
+
+  }
+
+  @Test
+  public void putUserWithWrongURITest() {
+    User givenUser = getUser();
+    webClient.put()
+        .uri(WRONG_URI)
+        .contentType(MediaType.APPLICATION_JSON)
+        .body(BodyInserters.fromObject(givenUser))
+        .exchange()
+        .expectStatus()
+        .isNotFound()
+        .expectStatus()
+        .isEqualTo(404)
+        .expectBody()
+        .jsonPath("$.message")
+        .isEqualTo("No message available");
+  }
+
+  @Test
+  public void putUserWithNullUserTest() {
+
+    User u = null;
+
+    Assertions.assertThatExceptionOfType(NullPointerException.class).isThrownBy(() ->
+        webClient.put()
+            .uri(PUT_USERS_URI)
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(BodyInserters.fromObject(u))
+            .exchange()
+    );
+  }
+
+
+
+  //TODO tester les URI avec des méthode non implémenté ( put, option, head )
+  //TODO completer un peu plus les test pour une meilleurs couverture fonctionnelle
 
   private User getUser() {
     return new User()
