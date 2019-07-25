@@ -59,7 +59,7 @@ public class UsersController {
   @GetMapping(path = "/id/{id}",
       produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
   public User getUserById(@PathVariable @NotBlank @NotNull final String id) {
-
+    //TODO remove this and fix test
     Objects.requireNonNull(id);
     return new User()
         .setId("5d35f26c1d168c9021b852ee")
