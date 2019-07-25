@@ -170,20 +170,21 @@ public class UsersControllerTest {
   @Test
   public void getUserByEmailTestUsingNullValueParam() {
 
-    final MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-    params.set("email", "");
-
-    final String getBuildUri = UriComponentsBuilder.fromUriString(GET_BY_EMAIL_URI)
-        .queryParams(params)
-        .toUriString();
 
     webClient.get()
-        .uri(getBuildUri)
+        .uri(GET_BY_EMAIL_URI)
         .exchange()
         .expectStatus()
-        .is4xxClientError();
+        .is4xxClientError()
+        .expectBody()
+        .jsonPath("$.message")
+        .isEqualTo("Required String parameter 'email' is not present")
+        .jsonPath("$.status")
+        .isEqualTo(400)
+        .jsonPath("$.error")
+        .isEqualTo("Bad Request");
 
-    //TODO ne donne pas le resultat attendu, la méthode ne leve pas d'exception quand l'email est null ou vide
+    //TODO model exemple pr les autres tests?
   }
 
   @Test
@@ -200,7 +201,14 @@ public class UsersControllerTest {
         .uri(getBuildUri)
         .exchange()
         .expectStatus()
-        .is4xxClientError();
+        .is5xxServerError()
+        .expectBody()
+        .jsonPath("$.message")
+        .isEqualTo("getUserByEmail.email: le paramètre de requête ne peut être vide")
+        .jsonPath("$.status")
+        .isEqualTo(500)
+        .jsonPath("$.error")
+        .isEqualTo("Internal Server Error");;
 
     //TODO ne donne pas le resultat attendu, la méthode ne leve pas d'exception quand l'email est null ou vide
   }
