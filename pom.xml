@@ -22,7 +22,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <org.projectlombok.version>1.18.4</org.projectlombok.version>
-    <vaadin.version>13.0.11</vaadin.version>
+    <vaadin.version>14.6.2</vaadin.version>
   </properties>
 
   <dependencies>
